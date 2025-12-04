@@ -1,0 +1,366 @@
+import { useState } from "react";
+import { useParams, Link } from "react-router-dom";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { mockProperties } from "@/data/mockProperties";
+import {
+  MapPin,
+  Bed,
+  Square,
+  CheckCircle,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Share2,
+  Phone,
+  MessageCircle,
+  Building,
+  Calendar,
+  ArrowLeft,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { useToast } from "@/hooks/use-toast";
+
+const PropertyDetail = () => {
+  const { id } = useParams();
+  const { toast } = useToast();
+  const [currentImage, setCurrentImage] = useState(0);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [showInterestDialog, setShowInterestDialog] = useState(false);
+
+  const property = mockProperties.find((p) => p.id === id);
+
+  if (!property) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-24 pb-16 container-custom text-center">
+          <h1 className="text-2xl font-bold mb-4">Property not found</h1>
+          <Link to="/properties">
+            <Button>Back to Properties</Button>
+          </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const formatPrice = (price: number) => {
+    if (price >= 10000000) {
+      return `₹${(price / 10000000).toFixed(2)} Cr`;
+    } else if (price >= 100000) {
+      return `₹${(price / 100000).toFixed(2)} L`;
+    }
+    return `₹${price.toLocaleString("en-IN")}`;
+  };
+
+  const handleInterest = () => {
+    setShowInterestDialog(true);
+  };
+
+  const handleWhatsAppConnect = () => {
+    const message = encodeURIComponent(
+      `Hi! I'm interested in the property "${property.title}" listed on JominBari.com. Please share more details.`
+    );
+    window.open(`https://wa.me/919876543210?text=${message}`, "_blank");
+    setShowInterestDialog(false);
+    toast({
+      title: "Redirecting to WhatsApp",
+      description: "You'll receive broker details after a quick chat.",
+    });
+  };
+
+  const nextImage = () => {
+    setCurrentImage((prev) => (prev + 1) % property.images.length);
+  };
+
+  const prevImage = () => {
+    setCurrentImage(
+      (prev) => (prev - 1 + property.images.length) % property.images.length
+    );
+  };
+
+  const listingTypeBadge = {
+    buy: { label: "For Sale", className: "bg-primary/10 text-primary" },
+    rent: { label: "For Rent", className: "bg-accent/10 text-accent" },
+    lease: { label: "For Lease", className: "bg-success/10 text-success" },
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+
+      <main className="pt-20 pb-16">
+        {/* Back Button */}
+        <div className="container-custom py-4">
+          <Link
+            to="/properties"
+            className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Properties
+          </Link>
+        </div>
+
+        {/* Image Gallery */}
+        <div className="container-custom mb-8">
+          <div className="relative rounded-2xl overflow-hidden aspect-[16/9] md:aspect-[21/9]">
+            <img
+              src={property.images[currentImage]}
+              alt={property.title}
+              className="w-full h-full object-cover"
+            />
+
+            {/* Navigation Arrows */}
+            {property.images.length > 1 && (
+              <>
+                <button
+                  onClick={prevImage}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/90 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-colors"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={nextImage}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-card/90 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-colors"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+
+            {/* Image Counter */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-card/90 backdrop-blur-sm text-sm font-medium">
+              {currentImage + 1} / {property.images.length}
+            </div>
+
+            {/* Badges */}
+            <div className="absolute top-4 left-4 flex items-center gap-2">
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  listingTypeBadge[property.listingType].className
+                }`}
+              >
+                {listingTypeBadge[property.listingType].label}
+              </span>
+              {property.isVerified && (
+                <span className="badge-verified text-sm">
+                  <CheckCircle className="w-4 h-4" />
+                  Verified
+                </span>
+              )}
+            </div>
+
+            {/* Action Buttons */}
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+              <button
+                onClick={() => setIsFavorite(!isFavorite)}
+                className="w-10 h-10 rounded-full bg-card/90 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-colors"
+              >
+                <Heart
+                  className={`w-5 h-5 ${
+                    isFavorite
+                      ? "fill-destructive text-destructive"
+                      : "text-muted-foreground"
+                  }`}
+                />
+              </button>
+              <button className="w-10 h-10 rounded-full bg-card/90 backdrop-blur-sm flex items-center justify-center hover:bg-card transition-colors">
+                <Share2 className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </div>
+          </div>
+
+          {/* Thumbnail Strip */}
+          {property.images.length > 1 && (
+            <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
+              {property.images.map((image, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentImage(index)}
+                  className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                    currentImage === index
+                      ? "border-accent"
+                      : "border-transparent opacity-60 hover:opacity-100"
+                  }`}
+                >
+                  <img
+                    src={image}
+                    alt={`${property.title} ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Property Details */}
+        <div className="container-custom">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Main Content */}
+            <div className="lg:col-span-2 space-y-8">
+              {/* Header */}
+              <div>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-3xl md:text-4xl font-bold text-primary">
+                    {formatPrice(property.price)}
+                  </span>
+                  {property.listingType !== "buy" && (
+                    <span className="text-muted-foreground">
+                      /{property.priceUnit}
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-2xl md:text-3xl font-heading font-bold text-foreground mb-3">
+                  {property.title}
+                </h1>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <MapPin className="w-5 h-5" />
+                  <span>{property.location}</span>
+                </div>
+              </div>
+
+              {/* Key Features */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-card rounded-xl p-4 border border-border">
+                  <Building className="w-6 h-6 text-accent mb-2" />
+                  <p className="text-sm text-muted-foreground">Property Type</p>
+                  <p className="font-semibold capitalize">{property.propertyType}</p>
+                </div>
+                {property.bedrooms > 0 && (
+                  <div className="bg-card rounded-xl p-4 border border-border">
+                    <Bed className="w-6 h-6 text-accent mb-2" />
+                    <p className="text-sm text-muted-foreground">Bedrooms</p>
+                    <p className="font-semibold">{property.bedrooms} BHK</p>
+                  </div>
+                )}
+                <div className="bg-card rounded-xl p-4 border border-border">
+                  <Square className="w-6 h-6 text-accent mb-2" />
+                  <p className="text-sm text-muted-foreground">Area</p>
+                  <p className="font-semibold">
+                    {property.area} {property.areaUnit}
+                  </p>
+                </div>
+                <div className="bg-card rounded-xl p-4 border border-border">
+                  <Calendar className="w-6 h-6 text-accent mb-2" />
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <p className="font-semibold">Ready to Move</p>
+                </div>
+              </div>
+
+              {/* Description */}
+              <div className="bg-card rounded-xl p-6 border border-border">
+                <h2 className="text-xl font-heading font-semibold mb-4">
+                  About this property
+                </h2>
+                <p className="text-muted-foreground leading-relaxed">
+                  This beautiful {property.propertyType} is located in{" "}
+                  {property.location}. Spanning {property.area} {property.areaUnit}
+                  , it offers{" "}
+                  {property.bedrooms > 0
+                    ? `${property.bedrooms} spacious bedrooms with`
+                    : ""}{" "}
+                  modern amenities and excellent connectivity to major areas of the
+                  city.
+                </p>
+                <p className="text-muted-foreground leading-relaxed mt-4">
+                  The property features premium fittings, ample natural light, and
+                  is perfect for families looking for a comfortable living space.
+                  Don't miss this opportunity to own your dream home.
+                </p>
+              </div>
+            </div>
+
+            {/* Sidebar */}
+            <div className="lg:col-span-1">
+              <div className="bg-card rounded-xl p-6 border border-border sticky top-24">
+                {/* Broker Info */}
+                <div className="flex items-center gap-3 mb-6 pb-6 border-b border-border">
+                  <div className="w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center">
+                    <Building className="w-6 h-6 text-accent" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-foreground">
+                      {property.broker.name}
+                    </p>
+                    {property.broker.isVerified && (
+                      <span className="badge-verified mt-1">
+                        <CheckCircle className="w-3 h-3" />
+                        Verified Broker
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* CTA Buttons */}
+                <div className="space-y-3">
+                  <Button
+                    onClick={handleInterest}
+                    className="btn-accent w-full text-lg py-6"
+                  >
+                    <MessageCircle className="w-5 h-5" />
+                    I'm Interested
+                  </Button>
+                  <p className="text-center text-sm text-muted-foreground">
+                    Connect via WhatsApp to get broker details
+                  </p>
+                </div>
+
+                {/* Trust Badge */}
+                <div className="mt-6 pt-6 border-t border-border">
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <CheckCircle className="w-5 h-5 text-success flex-shrink-0" />
+                    <span>
+                      This listing is verified by JominBari.com for authenticity
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* Interest Dialog */}
+      <Dialog open={showInterestDialog} onOpenChange={setShowInterestDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl">Express Your Interest</DialogTitle>
+            <DialogDescription>
+              Connect with our team on WhatsApp to share your preferences and receive verified broker details.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="bg-secondary rounded-lg p-4">
+              <p className="text-sm text-muted-foreground mb-2">Property:</p>
+              <p className="font-medium">{property.title}</p>
+              <p className="text-accent font-bold">{formatPrice(property.price)}</p>
+            </div>
+            <Button
+              onClick={handleWhatsAppConnect}
+              className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white"
+            >
+              <MessageCircle className="w-5 h-5 mr-2" />
+              Continue on WhatsApp
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              We'll ask a few questions to understand your needs before sharing broker contact.
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Footer />
+    </div>
+  );
+};
+
+export default PropertyDetail;
